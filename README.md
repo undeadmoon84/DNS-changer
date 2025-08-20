@@ -30,11 +30,11 @@ git clone https://github.com/undeadmoon84/DNS-changer.git
 cd DNS-changer
 ```
 
-2. Run the script:
+
 
 ---
 
-## Build Windows Executable
+## 2: Build Windows Executable
 
 You can convert the script to a standalone `.exe` using PyInstaller:
 
