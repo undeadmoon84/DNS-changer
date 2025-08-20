@@ -21,7 +21,7 @@ def list_interfaces():
         for line in lines[3:]:  # skip table headers
             parts = line.split()
             if len(parts) >= 4:
-                interfaces.append(parts[-1])  # last column is the name
+                interfaces.append(parts[-1])  # last column is interface name
         return interfaces
     except Exception as e:
         print(f"❌ Could not fetch interfaces: {e}")
@@ -70,12 +70,14 @@ def main():
         print("❌ Invalid interface choice.")
         return
 
-    # Choose DNS
+    # Display numbered DNS menu
+    dns_names = list(dns_options.keys())
     print("\nAvailable DNS providers:")
-    for i, (name, addrs) in enumerate(dns_options.items(), 1):
+    for i, name in enumerate(dns_names, 1):
         print(f"{i}. {name}")
     print("0. Clear DNS")
 
+    # Get user choice
     try:
         dns_choice = int(input("Choose DNS provider: "))
     except ValueError:
@@ -86,7 +88,7 @@ def main():
         clear_dns(interface_name)
     else:
         try:
-            dns_name = list(dns_options.keys())[dns_choice - 1]
+            dns_name = dns_names[dns_choice - 1]
             dns1, dns2 = dns_options[dns_name]
             set_dns(interface_name, dns1, dns2)
         except (IndexError, ValueError):
