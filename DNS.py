@@ -1,71 +1,96 @@
 import subprocess
+import json
+import os
 
-# Function to execute command
+# Run a shell command safely
 def execute_command(command):
     try:
         subprocess.run(command, shell=True, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"An error occurred: {e}")
+    except subprocess.CalledProcessError:
+        print("❌ Failed to run command. Are you running as Administrator?")
 
-# Function to set DNS addresses statically
+# List available network interfaces
+def list_interfaces():
+    try:
+        result = subprocess.run(
+            'netsh interface show interface',
+            capture_output=True, text=True, shell=True
+        )
+        lines = result.stdout.splitlines()
+        interfaces = []
+        for line in lines[3:]:  # skip table headers
+            parts = line.split()
+            if len(parts) >= 4:
+                interfaces.append(parts[-1])  # last column is the name
+        return interfaces
+    except Exception as e:
+        print(f"❌ Could not fetch interfaces: {e}")
+        return []
+
+# Set DNS servers
 def set_dns(interface_name, dns1, dns2):
     execute_command(f'netsh interface ip set dns "{interface_name}" static {dns1} primary')
     execute_command(f'netsh interface ip add dns "{interface_name}" {dns2} index=2')
-    print(f"DNS set to {dns1} and {dns2} for {interface_name}")
+    print(f"✅ DNS set to {dns1}, {dns2} for {interface_name}")
 
-# Function to clear DNS settings and set to automatic
+# Clear DNS (set to automatic)
 def clear_dns(interface_name):
     execute_command(f'netsh interface ip set dns "{interface_name}" dhcp')
-    print(f"DNS settings cleared for {interface_name}")
+    print(f"✅ DNS settings cleared for {interface_name}")
 
-
-# Main program
 def main():
-    dns_options = {
-        1: ("Shecan(185)", "185.51.200.2", "178.22.122.100"),
-        2: ("Shecan(178)", "178.22.122.100", "185.51.200.2"),
-        3: ("Electro", "78.157.42.100", "78.157.42.101"),
-        4: ("Cloudflare", "1.1.1.1", "1.0.0.1"),
-        5: ("OpenDNS", "208.67.222.222", "208.67.220.220"),
-        6: ("CleanBrowsing", "185.225.168.168", "185.228.169.168"),
-        7: ("Alternate DNS", "76.76.19.19", "76.223.122.150"),
-        8: ("Quad9", " 9.9.9.9", "149.112.112.112"),
-        9: ("AdGuard DNS", "176.103.130.130", "176.103.130.131"),
-        10: ("OpenNIC", "46.151.208.154", "128.199.248.105"),
-        11: ("DNS watch", "84.200.69.80", "84.200.70.40"),
-        12: ("Verisign", "64.6.64.6", "64.6.65.6"),
-        13: ("Safe DNS", "195.46.39.39", "195.46.39.40"),
-        14: ("Yandex DNS", "77.88.8.8", "77.88.8.1"),
-        15: ("Google Public DNS", "8.8.8.8", "8.8.4.4"),
-        16: ("Comodo Secure", "8.26.56.26", "8.20.247.20"),
-        17: ("Neustar DNS", "156.154.70.5", "156.154.71.5"),
-        18: ("Host Iran", "172.29.2.100", "172.29.0.100"),
-        19: ("Gozar DNS", "185.55.225.25", "185.55.225.26"),
-        20: ("DYN DNS", "216.146.35.35", "216.146.36.36"),
-        21: ("Shatel DNS", "85.15.1.15", "85.15.1.14"),
-        22: ("Radar Game DNS", "10.202.10.10", "10.202.10.11"),
-        23: ("Pishgaman DNS", "5.202.100.100", "5.202.100.101"),
-        24: ("403 Online DNS", "10.202.10.202", "10.202.10.102"),
-        25: ("Bogzar DNS", "185.55.226.26", "185.55.225.25"),
-    }
+    print("⚠️  ALERT: Run this program as Administrator!\n")
 
-    print(f"!!!ALERT: MAKE SURE YOU ARE RUNNING THE PROGRAM AS AN ADMINISTRATOR!!!\n")
+    # Load DNS options from JSON
+    if not os.path.exists("dns.json"):
+        print("❌ dns.json not found! Please create it.")
+        return
 
-    print(f"!!!ALERT: MAKE SURE YOUR NETWORK CONNECTION NAME IS Wi-Fi!!!'\n")
+    try:
+        with open("dns.json", "r") as f:
+            dns_options = json.load(f)
+    except json.JSONDecodeError:
+        print("❌ dns.json is not valid JSON.")
+        return
 
-    # Display all DNS options to the user
-    for key, value in dns_options.items():
-        print(f"{key}. {value[0]}")
+    # Choose interface
+    interfaces = list_interfaces()
+    if not interfaces:
+        print("❌ No interfaces found.")
+        return
+
+    print("Available interfaces:")
+    for i, iface in enumerate(interfaces, 1):
+        print(f"{i}. {iface}")
+
+    try:
+        iface_choice = int(input("Select an interface: "))
+        interface_name = interfaces[iface_choice - 1]
+    except (ValueError, IndexError):
+        print("❌ Invalid interface choice.")
+        return
+
+    # Choose DNS
+    print("\nAvailable DNS providers:")
+    for i, (name, addrs) in enumerate(dns_options.items(), 1):
+        print(f"{i}. {name}")
     print("0. Clear DNS")
 
-    dns_server = int(input("Choose DNS provider: "))
+    try:
+        dns_choice = int(input("Choose DNS provider: "))
+    except ValueError:
+        print("❌ Invalid input.")
+        return
 
-    if dns_server in dns_options:
-        set_dns(f"Wi-Fi", *dns_options[dns_server][1:])
-    elif dns_server == 0:
-        clear_dns(f"Wi-Fi")
+    if dns_choice == 0:
+        clear_dns(interface_name)
     else:
-        print("Invalid option selected.")
+        try:
+            dns_name = list(dns_options.keys())[dns_choice - 1]
+            dns1, dns2 = dns_options[dns_name]
+            set_dns(interface_name, dns1, dns2)
+        except (IndexError, ValueError):
+            print("❌ Invalid DNS choice.")
 
 if __name__ == "__main__":
     main()
