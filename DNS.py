@@ -1,4 +1,5 @@
 import subprocess
+import sys
 
 # Run a shell command safely
 def execute_command(command):
@@ -6,6 +7,8 @@ def execute_command(command):
         subprocess.run(command, shell=True, check=True)
     except subprocess.CalledProcessError:
         print("❌ Failed to run command. Are you running as Administrator?")
+        input("Press Enter to exit...")
+        sys.exit(1)
 
 # List available network interfaces
 def list_interfaces():
@@ -23,7 +26,8 @@ def list_interfaces():
         return interfaces
     except Exception as e:
         print(f"❌ Could not fetch interfaces: {e}")
-        return []
+        input("Press Enter to exit...")
+        sys.exit(1)
 
 # Set DNS servers
 def set_dns(interface_name, dns1, dns2):
@@ -72,7 +76,8 @@ def main():
     interfaces = list_interfaces()
     if not interfaces:
         print("❌ No interfaces found.")
-        return
+        input("Press Enter to exit...")
+        sys.exit(1)
 
     print("Available interfaces:")
     for i, iface in enumerate(interfaces, 1):
@@ -83,7 +88,8 @@ def main():
         interface_name = interfaces[iface_choice - 1]
     except (ValueError, IndexError):
         print("❌ Invalid interface choice.")
-        return
+        input("Press Enter to exit...")
+        sys.exit(1)
 
     # Display numbered DNS menu
     print("\nAvailable DNS providers:")
@@ -95,7 +101,8 @@ def main():
         dns_choice = int(input("Choose DNS provider: "))
     except ValueError:
         print("❌ Invalid input.")
-        return
+        input("Press Enter to exit...")
+        sys.exit(1)
 
     if dns_choice == 0:
         clear_dns(interface_name)
@@ -105,6 +112,13 @@ def main():
             set_dns(interface_name, dns1, dns2)
         except IndexError:
             print("❌ Invalid DNS choice.")
+            input("Press Enter to exit...")
+            sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}")
+        input("Press Enter to exit...")
+        sys.exit(1)
