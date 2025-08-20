@@ -1,6 +1,4 @@
 import subprocess
-import json
-import os
 
 # Run a shell command safely
 def execute_command(command):
@@ -41,17 +39,34 @@ def clear_dns(interface_name):
 def main():
     print("⚠️  ALERT: Run this program as Administrator!\n")
 
-    # Load DNS options from JSON
-    if not os.path.exists("dns.json"):
-        print("❌ dns.json not found! Please create it.")
-        return
-
-    try:
-        with open("dns.json", "r") as f:
-            dns_options = json.load(f)
-    except json.JSONDecodeError:
-        print("❌ dns.json is not valid JSON.")
-        return
+    # DNS options embedded in the code
+    dns_options = [
+        ("Shecan(185)", "185.51.200.2", "178.22.122.100"),
+        ("Shecan(178)", "178.22.122.100", "185.51.200.2"),
+        ("Electro", "78.157.42.100", "78.157.42.101"),
+        ("Cloudflare", "1.1.1.1", "1.0.0.1"),
+        ("OpenDNS", "208.67.222.222", "208.67.220.220"),
+        ("CleanBrowsing", "185.225.168.168", "185.228.169.168"),
+        ("Alternate DNS", "76.76.19.19", "76.223.122.150"),
+        ("Quad9", "9.9.9.9", "149.112.112.112"),
+        ("AdGuard DNS", "176.103.130.130", "176.103.130.131"),
+        ("OpenNIC", "46.151.208.154", "128.199.248.105"),
+        ("DNS Watch", "84.200.69.80", "84.200.70.40"),
+        ("Verisign", "64.6.64.6", "64.6.65.6"),
+        ("Safe DNS", "195.46.39.39", "195.46.39.40"),
+        ("Yandex DNS", "77.88.8.8", "77.88.8.1"),
+        ("Google Public DNS", "8.8.8.8", "8.8.4.4"),
+        ("Comodo Secure", "8.26.56.26", "8.20.247.20"),
+        ("Neustar DNS", "156.154.70.5", "156.154.71.5"),
+        ("Host Iran", "172.29.2.100", "172.29.0.100"),
+        ("Gozar DNS", "185.55.225.25", "185.55.225.26"),
+        ("DYN DNS", "216.146.35.35", "216.146.36.36"),
+        ("Shatel DNS", "85.15.1.15", "85.15.1.14"),
+        ("Radar Game DNS", "10.202.10.10", "10.202.10.11"),
+        ("Pishgaman DNS", "5.202.100.100", "5.202.100.101"),
+        ("403 Online DNS", "10.202.10.202", "10.202.10.102"),
+        ("Bogzar DNS", "185.55.226.26", "185.55.225.25")
+    ]
 
     # Choose interface
     interfaces = list_interfaces()
@@ -71,13 +86,11 @@ def main():
         return
 
     # Display numbered DNS menu
-    dns_names = list(dns_options.keys())
     print("\nAvailable DNS providers:")
-    for i, name in enumerate(dns_names, 1):
+    for i, (name, _, _) in enumerate(dns_options, 1):
         print(f"{i}. {name}")
     print("0. Clear DNS")
 
-    # Get user choice
     try:
         dns_choice = int(input("Choose DNS provider: "))
     except ValueError:
@@ -88,10 +101,9 @@ def main():
         clear_dns(interface_name)
     else:
         try:
-            dns_name = dns_names[dns_choice - 1]
-            dns1, dns2 = dns_options[dns_name]
+            dns_name, dns1, dns2 = dns_options[dns_choice - 1]
             set_dns(interface_name, dns1, dns2)
-        except (IndexError, ValueError):
+        except IndexError:
             print("❌ Invalid DNS choice.")
 
 if __name__ == "__main__":
